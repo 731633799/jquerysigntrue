@@ -24,31 +24,35 @@
     <button>用户签名：</button>
     <img src="" class="image" id="image0" style="max-width: 100%" alt="">
 </div>
+<div class="test">
+    <button>用户签名：</button>
+    <img src="" class="image" id="image0000" style="max-width: 100%" alt="">
+</div>
 <br>
 <hr>
 <br>
 <p></p>
-<button class="test">是否同意：</button>
+<button class="test2">是否同意：</button>
 <img src="" class="image" id="image00" alt="" style="max-width: 100%">
 </body>
 
 <script>
 
-
+    $.fn.extend({
+        image:function () {
+            return $(this).find(".FullScreen-Signature").jSignature("getData", "image");
+        },
+        native:function () {
+           return  $(this).find(".FullScreen-Signature").jSignature("getData", "native")
+        }
+    })
     $.fn.FullScreenSigntrue = function (config) {
         var _this = this;
         var common = {
             config: {
                 color: "#000000",
                 bgColor: "#eeeeee",
-                lineWidth: 4,
-                clear: function (index, dom) {
-                },
-                cancel: function (index, dom) {
-                },
-                ok: function (base64, native_length, index, dom) {
-                    return true;
-                }
+                lineWidth: 4
             },
             rotate: function () {
                 if (window.screen.width < window.screen.height) {
@@ -88,24 +92,9 @@
             exitFullscreen: function () {
                 document.exitFullscreen ? document.exitFullscreen() : document.mozCancelFullScreen ? document.mozCancelFullScreen() : document.webkitExitFullscreen && document.webkitExitFullscreen();
                 $(".FullScreen-Signature").hide();
-            },
-            base64Image: function () {
-                var arr = [];
-                _this.each(function (index) {
-                    var data = $(this).find(".FullScreen-Signature").jSignature("getData", "image");
-                    arr.push(typeof data == "object" ? "data:" + data : false)
-                })
-                return arr;
-            },
-            native: function () {
-                var arr = [];
-                _this.each(function (index) {
-                    arr.push($(this).find(".FullScreen-Signature").jSignature("getData", "native"));
-                })
-                return arr;
             }
         }
-
+        typeof config == "object" && Object.assign(common.config, config);
         var handle = {
             Signature: function () {
                 if (common.rotate()) {
@@ -139,25 +128,28 @@
             BindClick: function (_this, index) {
                 _this.find(".cancel").click(function () {
                     common.exitFullscreen();
-                    common.config.cancel(index, $(_this));
+                    _this.trigger("cancel");
                     return false;
                 })
                 _this.find(".clear").click(function () {
                     _this.find(".FullScreen-Signature").jSignature("clear");
-                    common.config.clear(index, $(_this));
+                    _this.trigger("clear");
                     return false;
                 })
-                _this.find(".ok").click(function (event) {
+                _this.find(".ok").click(function () {
                     var data = _this.find(".FullScreen-Signature").jSignature("getData", "image")
                     var image = data.join(",");
-                    common.config.ok("data:" + image, _this.find(".FullScreen-Signature").jSignature("getData", "native").length, index, $(_this)) == true && _this.find(".cancel").trigger("click");
+                    var data={base64:"data:" + image,native_length:_this.find(".FullScreen-Signature").jSignature("getData", "native").length,close:true};
+                    _this.trigger("ok",data);
+                    data.close==true && _this.find(".cancel").trigger("click");
                     return false;
                 })
             }
         }
-        typeof config == "object" && Object.assign(common.config, config)
-        $(this).append(common.createHtml());
+
+
         _this.each(function (index) {
+            $(this).append(common.createHtml());
             $(this).bind("click", function () {
                 common.FullScreen(index);
             })
@@ -201,16 +193,20 @@
         return common;
     }
 
-    $(".test").FullScreenSigntrue({
-        ok: function (data, length, index, dom) {
-            if (index == 0) {
-                $("#image0").attr("src", data)
-            } else {
-                $("#image00").attr("src", data)
-            }
-            return true;
-        }
+
+</script>
+<script>
+
+    $(".test").FullScreenSigntrue()
+    $(".test2").FullScreenSigntrue()
+
+    $(".test").on("ok",function (event,data) {
+        $("#image0").attr("src",data.base64)
     })
 
+    $(".test2").on("ok",function (event,data) {
+        // data.close=false; //阻止关闭
+        $("#image00").attr("src",data.base64)
+    })
 </script>
 </html>
